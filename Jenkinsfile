@@ -16,8 +16,8 @@ pipeline {
             }
             steps {
                 sh '''
-                    pip install -r requirements.txt
-                    pip install -r requirements-dev.txt
+                    pip install --user -r requirements.txt
+                    pip install --user -r requirements-dev.txt
                     pytest tests/ -v
                 '''
             }
@@ -29,7 +29,7 @@ pipeline {
             }
             steps {
                 sh '''
-                    pip install -r requirements.txt
+                    pip install --user -r requirements.txt
                     npm ci
                     npx playwright test --project=chromium
                 '''
