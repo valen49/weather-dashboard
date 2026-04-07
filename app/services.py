@@ -1,22 +1,41 @@
 import requests
 
-BASE_URL = "https://api.open-meteo.com/v1/forecast"
+WEATHER_URL = "https://api.open-meteo.com/v1/forecast"
+GEOCODING_URL = "https://geocoding-api.open-meteo.com/v1/search"
 
-DEFAULT_PARAMS = {
-    "latitude": -32.89,
-    "longitude": -68.83,
-    "current": ["temperature_2m", "wind_speed_10m", "weather_code"],
-    "timezone": "America/Argentina/Buenos_Aires"
-}
+def get_coordinates(city: str):
+    try:
+        response = requests.get(
+            GEOCODING_URL,
+            params={"name": city, "count": 1, "language": "es"},
+            timeout=10
+        )
+        response.raise_for_status()
+        data = response.json()
+        if not data.get("results"):
+            return None
+        result = data["results"][0]
+        return {
+            "name": result["name"],
+            "country": result["country"],
+            "latitude": result["latitude"],
+            "longitude": result["longitude"]
+        }
+    except Exception:
+        return None
 
 def get_weather(latitude=-32.89, longitude=-68.83):
     try:
-        params = {
-            **DEFAULT_PARAMS,
-            "latitude": latitude,
-            "longitude": longitude,
-        }
-        response = requests.get(BASE_URL, params=params, timeout=10)
+        response = requests.get(
+            WEATHER_URL,
+            params={
+                "latitude": latitude,
+                "longitude": longitude,
+                "current": ["temperature_2m", "wind_speed_10m", "weather_code"],
+                "timezone": "auto"
+            },
+            timeout=10
+        )
         response.raise_for_status()
         data = response.json()
         current = data["current"]
@@ -33,3 +52,6 @@ def get_weather(latitude=-32.89, longitude=-68.83):
             "weather_code": None,
             "success": False
         }
+    
+
+    

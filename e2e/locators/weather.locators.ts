@@ -1,0 +1,11 @@
+export const WeatherLocators = {
+  appTitle: '[data-testid="app-title"]',
+  weatherCard: '[data-testid="weather-card"]',
+  temperature: '[data-testid="temperature"]',
+  windSpeed: '[data-testid="wind-speed"]',
+  errorMessage: '[data-testid="error-message"]',
+  cityInput: '[data-testid="city-input"]',
+  searchButton: '[data-testid="search-button"]',
+  locationName: '[data-testid="location-name"]',
+  notFoundMessage: '[data-testid="not-found-message"]',
+};
