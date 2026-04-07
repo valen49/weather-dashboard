@@ -1,8 +1,9 @@
 pipeline {
-    agent any
+    agent none
 
     stages {
         stage('Checkout') {
+            agent any
             steps {
                 echo 'Clonando repositorio...'
                 checkout scm
@@ -10,11 +11,11 @@ pipeline {
         }
 
         stage('Unit Tests') {
+            agent {
+                docker { image 'python:3.11' }
+            }
             steps {
-                echo 'Corriendo tests unitarios...'
                 sh '''
-                    python3 -m venv venv
-                    . venv/bin/activate
                     pip install -r requirements.txt
                     pip install -r requirements-dev.txt
                     pytest tests/ -v
@@ -23,12 +24,13 @@ pipeline {
         }
 
         stage('E2E Tests') {
+            agent {
+                docker { image 'mcr.microsoft.com/playwright/python:v1.51.0-noble' }
+            }
             steps {
-                echo 'Corriendo tests E2E...'
                 sh '''
-                    . venv/bin/activate
+                    pip install -r requirements.txt
                     npm ci
-                    npx playwright install chromium
                     npx playwright test --project=chromium
                 '''
             }
