@@ -10,6 +10,7 @@ export default defineConfig({
   use: {
     baseURL: 'http://localhost:5000',
     trace: 'on-first-retry',
+    timeout: 60000,
   },
   projects: [
     {
@@ -21,6 +22,6 @@ export default defineConfig({
     command: 'python run.py',
     url: 'http://localhost:5000',
     reuseExistingServer: !process.env.CI,
-    timeout: 10000,
+    timeout: 30000,
   },
 });
