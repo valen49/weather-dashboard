@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import patch, MagicMock
-from app.services import get_weather, get_coordinates, get_forecast
+from app.services import get_weather, get_coordinates, get_forecast, get_weather_icon
 
 def test_get_weather_success():
     mock_response = MagicMock()
@@ -19,6 +19,7 @@ def test_get_weather_success():
     assert result["success"] == True
     assert result["temperature"] == 20.0
     assert result["wind_speed"] == 10.0
+    assert result["icon"] == "☀️"
 
 def test_get_weather_failure():
     with patch("app.services.requests.get", side_effect=Exception("API error")):
@@ -26,6 +27,7 @@ def test_get_weather_failure():
 
     assert result["success"] == False
     assert result["temperature"] is None
+    assert result["icon"] == "🌡️"
 
 def test_get_coordinates_success():
     mock_response = MagicMock()
@@ -62,7 +64,6 @@ def test_get_coordinates_failure():
 
     assert result is None
 
-
 def test_get_forecast_success():
     mock_response = MagicMock()
     mock_response.json.return_value = {
@@ -82,6 +83,7 @@ def test_get_forecast_success():
     assert len(result["days"]) == 7
     assert result["days"][0]["temp_max"] == 25.0
     assert result["days"][0]["date"] == "2026-04-07"
+    assert result["days"][0]["icon"] == "☀️"
 
 def test_get_forecast_failure():
     with patch("app.services.requests.get", side_effect=Exception("error")):
@@ -89,3 +91,12 @@ def test_get_forecast_failure():
 
     assert result["success"] == False
     assert result["days"] == []
+
+def test_get_weather_icon():
+    assert get_weather_icon(0) == "☀️"
+    assert get_weather_icon(1) == "⛅"
+    assert get_weather_icon(45) == "🌫️"
+    assert get_weather_icon(61) == "🌧️"
+    assert get_weather_icon(71) == "❄️"
+    assert get_weather_icon(95) == "⛈️"
+    assert get_weather_icon(999) == "🌡️"

@@ -47,6 +47,10 @@
             font-weight: bold;
             color: #2b6cb0;
         }
+        .weather-icon {
+            font-size: 3rem;
+            margin: 8px 0;
+        }
         .weather-data {
             font-size: 1.2rem;
             margin: 12px 0;
@@ -71,6 +75,10 @@
             font-size: 0.75rem;
             color: #718096;
             margin-bottom: 8px;
+        }
+        .forecast-icon {
+            font-size: 1.5rem;
+            margin: 4px 0;
         }
         .forecast-temp-max {
             font-weight: bold;
@@ -107,6 +115,9 @@
             <div class="temperature" data-testid="temperature">
                 {{ weather.temperature }}°C
             </div>
+            <div class="weather-icon" data-testid="weather-icon">
+                {{ weather.icon }}
+            </div>
             <div class="weather-data" data-testid="wind-speed">
                 💨 Viento: {{ weather.wind_speed }} km/h
             </div>
@@ -129,6 +140,7 @@
             {% for day in forecast.days %}
             <div class="forecast-card" data-testid="forecast-card">
                 <div class="forecast-date">{{ day.date }}</div>
+                <div class="forecast-icon">{{ day.icon }}</div>
                 <div class="forecast-temp-max" data-testid="forecast-temp-max">{{ day.temp_max }}°C</div>
                 <div class="forecast-temp-min" data-testid="forecast-temp-min">{{ day.temp_min }}°C</div>
             </div>

@@ -3,6 +3,26 @@ import requests
 WEATHER_URL = "https://api.open-meteo.com/v1/forecast"
 GEOCODING_URL = "https://geocoding-api.open-meteo.com/v1/search"
 
+def get_weather_icon(weather_code: int) -> str:
+    if weather_code == 0:
+        return "☀️"
+    elif weather_code in [1, 2, 3]:
+        return "⛅"
+    elif weather_code in [45, 48]:
+        return "🌫️"
+    elif weather_code in [51, 53, 55]:
+        return "🌦️"
+    elif weather_code in [61, 63, 65]:
+        return "🌧️"
+    elif weather_code in [71, 73, 75]:
+        return "❄️"
+    elif weather_code in [80, 81, 82]:
+        return "🌦️"
+    elif weather_code == 95:
+        return "⛈️"
+    else:
+        return "🌡️"
+
 def get_coordinates(city: str):
     try:
         response = requests.get(
@@ -43,6 +63,7 @@ def get_weather(latitude=-32.89, longitude=-68.83):
             "temperature": current["temperature_2m"],
             "wind_speed": current["wind_speed_10m"],
             "weather_code": current["weather_code"],
+            "icon": get_weather_icon(current["weather_code"]),
             "success": True
         }
     except Exception:
@@ -50,6 +71,7 @@ def get_weather(latitude=-32.89, longitude=-68.83):
             "temperature": None,
             "wind_speed": None,
             "weather_code": None,
+            "icon": "🌡️",
             "success": False
         }
 
@@ -75,7 +97,8 @@ def get_forecast(latitude=-32.89, longitude=-68.83):
                 "date": daily["time"][i],
                 "temp_max": daily["temperature_2m_max"][i],
                 "temp_min": daily["temperature_2m_min"][i],
-                "weather_code": daily["weather_code"][i]
+                "weather_code": daily["weather_code"][i],
+                "icon": get_weather_icon(daily["weather_code"][i]),
             })
         return {"days": forecast, "success": True}
     except Exception:
