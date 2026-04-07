@@ -53,4 +53,17 @@ test.describe('Weather Dashboard', () => {
     });
   });
 
+  test.describe('Forecast', () => {
+    test('should display forecast container', async ({ page }) => {
+      const weatherPage = new WeatherPage(page);
+      await weatherPage.goto();
+      await expect(weatherPage.forecastContainer).toBeVisible();
+    });
+
+    test('should display 7 forecast cards', async ({ page }) => {
+      const weatherPage = new WeatherPage(page);
+      await weatherPage.goto();
+      await expect(weatherPage.forecastCards).toHaveCount(7);
+    });
+  });
 });
