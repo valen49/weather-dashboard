@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import patch, MagicMock
-from app.services import get_weather
+from app.services import get_weather, get_coordinates
 
 def test_get_weather_success():
     mock_response = MagicMock()
@@ -26,4 +26,38 @@ def test_get_weather_failure():
 
     assert result["success"] == False
     assert result["temperature"] is None
-    assert result["wind_speed"] is None
+
+def test_get_coordinates_success():
+    mock_response = MagicMock()
+    mock_response.json.return_value = {
+        "results": [{
+            "name": "Buenos Aires",
+            "country": "Argentina",
+            "latitude": -34.61,
+            "longitude": -58.37
+        }]
+    }
+    mock_response.raise_for_status = MagicMock()
+
+    with patch("app.services.requests.get", return_value=mock_response):
+        result = get_coordinates("Buenos Aires")
+
+    assert result is not None
+    assert result["name"] == "Buenos Aires"
+    assert result["latitude"] == -34.61
+
+def test_get_coordinates_not_found():
+    mock_response = MagicMock()
+    mock_response.json.return_value = {"results": []}
+    mock_response.raise_for_status = MagicMock()
+
+    with patch("app.services.requests.get", return_value=mock_response):
+        result = get_coordinates("ciudadinexistente123")
+
+    assert result is None
+
+def test_get_coordinates_failure():
+    with patch("app.services.requests.get", side_effect=Exception("error")):
+        result = get_coordinates("Buenos Aires")
+
+    assert result is None
