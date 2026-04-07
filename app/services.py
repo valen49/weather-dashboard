@@ -52,6 +52,31 @@ def get_weather(latitude=-32.89, longitude=-68.83):
             "weather_code": None,
             "success": False
         }
-    
 
-    
+def get_forecast(latitude=-32.89, longitude=-68.83):
+    try:
+        response = requests.get(
+            WEATHER_URL,
+            params={
+                "latitude": latitude,
+                "longitude": longitude,
+                "daily": ["temperature_2m_max", "temperature_2m_min", "weather_code"],
+                "timezone": "auto",
+                "forecast_days": 7
+            },
+            timeout=10
+        )
+        response.raise_for_status()
+        data = response.json()
+        daily = data["daily"]
+        forecast = []
+        for i in range(7):
+            forecast.append({
+                "date": daily["time"][i],
+                "temp_max": daily["temperature_2m_max"][i],
+                "temp_min": daily["temperature_2m_min"][i],
+                "weather_code": daily["weather_code"][i]
+            })
+        return {"days": forecast, "success": True}
+    except Exception:
+        return {"days": [], "success": False}

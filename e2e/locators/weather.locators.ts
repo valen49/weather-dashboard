@@ -8,4 +8,8 @@ export const WeatherLocators = {
   searchButton: '[data-testid="search-button"]',
   locationName: '[data-testid="location-name"]',
   notFoundMessage: '[data-testid="not-found-message"]',
+  forecastContainer: '[data-testid="forecast-container"]',
+  forecastCard: '[data-testid="forecast-card"]',
+  forecastTempMax: '[data-testid="forecast-temp-max"]',
+  forecastTempMin: '[data-testid="forecast-temp-min"]',
 };

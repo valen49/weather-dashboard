@@ -7,7 +7,7 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            max-width: 600px;
+            max-width: 900px;
             margin: 40px auto;
             padding: 20px;
             background-color: #f0f4f8;
@@ -53,6 +53,33 @@
             color: #4a5568;
         }
         .error { color: #e53e3e; }
+        .forecast-container { margin-top: 24px; }
+        .forecast-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .forecast-card {
+            background: white;
+            border-radius: 8px;
+            padding: 12px 8px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .forecast-date {
+            font-size: 0.75rem;
+            color: #718096;
+            margin-bottom: 8px;
+        }
+        .forecast-temp-max {
+            font-weight: bold;
+            color: #2b6cb0;
+        }
+        .forecast-temp-min {
+            color: #718096;
+            font-size: 0.9rem;
+        }
     </style>
 </head>
 <body>
@@ -93,6 +120,21 @@
             No se pudo obtener el clima. Intentá más tarde.
         </p>
         {% endif %}
+    {% endif %}
+
+    {% if forecast and forecast.success %}
+    <div class="forecast-container" data-testid="forecast-container">
+        <h2>Próximos 7 días</h2>
+        <div class="forecast-grid">
+            {% for day in forecast.days %}
+            <div class="forecast-card" data-testid="forecast-card">
+                <div class="forecast-date">{{ day.date }}</div>
+                <div class="forecast-temp-max" data-testid="forecast-temp-max">{{ day.temp_max }}°C</div>
+                <div class="forecast-temp-min" data-testid="forecast-temp-min">{{ day.temp_min }}°C</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
     {% endif %}
 </body>
 </html>

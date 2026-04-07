@@ -12,6 +12,8 @@ export class WeatherPage {
   readonly searchButton: Locator;
   readonly locationName: Locator;
   readonly notFoundMessage: Locator;
+  readonly forecastContainer: Locator;
+  readonly forecastCards: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -24,6 +26,8 @@ export class WeatherPage {
     this.searchButton = page.locator(WeatherLocators.searchButton);
     this.locationName = page.locator(WeatherLocators.locationName);
     this.notFoundMessage = page.locator(WeatherLocators.notFoundMessage);
+    this.forecastContainer = page.locator(WeatherLocators.forecastContainer);
+    this.forecastCards = page.locator(WeatherLocators.forecastCard);
   }
 
   async goto() {

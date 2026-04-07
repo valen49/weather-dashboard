@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import patch, MagicMock
-from app.services import get_weather, get_coordinates
+from app.services import get_weather, get_coordinates, get_forecast
 
 def test_get_weather_success():
     mock_response = MagicMock()
@@ -61,3 +61,31 @@ def test_get_coordinates_failure():
         result = get_coordinates("Buenos Aires")
 
     assert result is None
+
+
+def test_get_forecast_success():
+    mock_response = MagicMock()
+    mock_response.json.return_value = {
+        "daily": {
+            "time": ["2026-04-07", "2026-04-08", "2026-04-09", "2026-04-10", "2026-04-11", "2026-04-12", "2026-04-13"],
+            "temperature_2m_max": [25.0, 26.0, 24.0, 23.0, 27.0, 28.0, 22.0],
+            "temperature_2m_min": [15.0, 16.0, 14.0, 13.0, 17.0, 18.0, 12.0],
+            "weather_code": [0, 1, 2, 3, 0, 1, 2]
+        }
+    }
+    mock_response.raise_for_status = MagicMock()
+
+    with patch("app.services.requests.get", return_value=mock_response):
+        result = get_forecast()
+
+    assert result["success"] == True
+    assert len(result["days"]) == 7
+    assert result["days"][0]["temp_max"] == 25.0
+    assert result["days"][0]["date"] == "2026-04-07"
+
+def test_get_forecast_failure():
+    with patch("app.services.requests.get", side_effect=Exception("error")):
+        result = get_forecast()
+
+    assert result["success"] == False
+    assert result["days"] == []
