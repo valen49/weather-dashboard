@@ -4,9 +4,54 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Weather Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 20px;
+            background-color: #f0f4f8;
+        }
+        h1 {
+            color: #2d3748;
+        }
+        .weather-card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .weather-data {
+            font-size: 1.2rem;
+            margin: 12px 0;
+            color: #4a5568;
+        }
+        .temperature {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #2b6cb0;
+        }
+        .error {
+            color: #e53e3e;
+        }
+    </style>
 </head>
 <body>
     <h1 data-testid="app-title">Weather Dashboard</h1>
-    <p data-testid="app-subtitle">Tu dashboard del clima</p>
+
+    {% if weather.success %}
+    <div class="weather-card" data-testid="weather-card">
+        <div class="temperature" data-testid="temperature">
+            {{ weather.temperature }}°C
+        </div>
+        <div class="weather-data" data-testid="wind-speed">
+            💨 Viento: {{ weather.wind_speed }} km/h
+        </div>
+    </div>
+    {% else %}
+    <p class="error" data-testid="error-message">
+        No se pudo obtener el clima. Intentá más tarde.
+    </p>
+    {% endif %}
 </body>
 </html>
