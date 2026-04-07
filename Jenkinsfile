@@ -28,7 +28,7 @@ pipeline {
                 sh '''
                     . venv/bin/activate
                     npm ci
-                    npx playwright install chromium --with-deps
+                    npx playwright install chromium
                     npx playwright test --project=chromium
                 '''
             }
