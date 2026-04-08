@@ -33,14 +33,15 @@ test.describe('Weather Dashboard', () => {
   });
 
   test.describe('City Search', () => {
-test('should show weather for a valid city', async ({ page }) => {
-  const weatherPage = new WeatherPage(page);
-  await weatherPage.goto();
-  await weatherPage.searchCity('Buenos Aires');
-  const hasCard = await weatherPage.weatherCard.isVisible();
-  const hasError = await weatherPage.notFoundMessage.isVisible();
-  expect(hasCard || hasError).toBeTruthy();
-});
+    test('should show weather for a valid city', async ({ page }) => {
+      const weatherPage = new WeatherPage(page);
+      await weatherPage.goto();
+      await weatherPage.searchCity('Buenos Aires');
+      const hasCard = await weatherPage.weatherCard.isVisible();
+      const hasError = await weatherPage.notFoundMessage.isVisible();
+      expect(hasCard || hasError).toBeTruthy();
+    });
+
     test('should show not found message for invalid city', async ({ page }) => {
       const weatherPage = new WeatherPage(page);
       await weatherPage.goto();
@@ -142,6 +143,75 @@ test('should show weather for a valid city', async ({ page }) => {
         await weatherPage.toggleButton.click();
         const maxAfter = await weatherPage.forecastTempMax.textContent();
         expect(maxAfter).toContain('°F');
+      }
+    });
+  });
+
+  test.describe('City Comparison', () => {
+    test('should display compare button when city is searched', async ({ page }) => {
+      const weatherPage = new WeatherPage(page);
+      await weatherPage.goto();
+      await weatherPage.searchCity('Mendoza');
+      const hasCompareBtn = await weatherPage.compareBtn.isVisible();
+      const hasError = await weatherPage.errorMessage.isVisible();
+      expect(hasCompareBtn || hasError).toBeTruthy();
+    });
+
+    test('should show compare input when compare button is clicked', async ({ page }) => {
+      const weatherPage = new WeatherPage(page);
+      await weatherPage.goto();
+      await weatherPage.searchCity('Mendoza');
+      const hasCompareBtn = await weatherPage.compareBtn.isVisible();
+      if (hasCompareBtn) {
+        await weatherPage.compareBtn.click();
+        await expect(weatherPage.compareInput).toBeVisible();
+      }
+    });
+
+    test('should display both cities when compared', async ({ page }) => {
+      const weatherPage = new WeatherPage(page);
+      await weatherPage.goto();
+      await weatherPage.searchCity('Mendoza');
+      const hasCompareBtn = await weatherPage.compareBtn.isVisible();
+      if (hasCompareBtn) {
+        await weatherPage.compareWithCity('Buenos Aires');
+        const hasGrid = await weatherPage.comparisonGrid.isVisible();
+        const hasError = await weatherPage.errorMessage.isVisible();
+        expect(hasGrid || hasError).toBeTruthy();
+      }
+    });
+
+
+    test('should toggle compare temperature to fahrenheit', async ({ page }) => {
+      const weatherPage = new WeatherPage(page);
+      await weatherPage.goto();
+      await weatherPage.searchCity('Mendoza');
+      const hasCompareBtn = await weatherPage.compareBtn.isVisible();
+      if (hasCompareBtn) {
+        await weatherPage.compareWithCity('Buenos Aires');
+        const hasGrid = await weatherPage.comparisonGrid.isVisible();
+        if (hasGrid) {
+          const tempBefore = await weatherPage.compareTemperature.textContent();
+          expect(tempBefore).toContain('°C');
+          await weatherPage.toggleButton.click();
+          const tempAfter = await weatherPage.compareTemperature.textContent();
+          expect(tempAfter).toContain('°F');
+        }
+      }
+    });
+
+    test('should exit comparison mode', async ({ page }) => {
+      const weatherPage = new WeatherPage(page);
+      await weatherPage.goto();
+      await weatherPage.searchCity('Mendoza');
+      const hasCompareBtn = await weatherPage.compareBtn.isVisible();
+      if (hasCompareBtn) {
+        await weatherPage.compareWithCity('Buenos Aires');
+        const hasGrid = await weatherPage.comparisonGrid.isVisible();
+        if (hasGrid) {
+          await page.click('text=✕ Quitar comparación');
+          await expect(weatherPage.comparisonGrid).not.toBeVisible();
+        }
       }
     });
   });

@@ -7,7 +7,7 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            max-width: 900px;
+            max-width: 1200px;
             margin: 40px auto;
             padding: 20px;
             background-color: #f0f4f8;
@@ -67,7 +67,41 @@
             margin-top: 12px;
         }
         .toggle-btn:hover { background-color: #4a5568; }
+        .compare-btn {
+            padding: 8px 16px;
+            background-color: #9f7aea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-top: 12px;
+            margin-left: 8px;
+        }
+        .compare-btn:hover { background-color: #805ad5; }
         .error { color: #e53e3e; }
+        .compare-form {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+        }
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-top: 24px;
+        }
+        .vs-label {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: bold;
+            color: #718096;
+        }
+        .comparison-grid .weather-card {
+            margin: 0;
+        }
         .forecast-container { margin-top: 24px; }
         .forecast-grid {
             display: grid;
@@ -112,11 +146,86 @@
             value="{{ city }}"
             data-testid="city-input"
         >
+        {% if compare %}
+        <input type="hidden" name="compare" value="{{ compare }}">
+        {% endif %}
         <button type="submit" data-testid="search-button">Buscar</button>
     </form>
 
     {% if weather %}
         {% if weather.success %}
+
+        {% if compare_weather and compare_weather.success %}
+        <!-- Vista comparación -->
+        <div class="comparison-grid" data-testid="comparison-grid">
+            <div class="weather-card" data-testid="weather-card">
+                {% if location %}
+                <div class="location" data-testid="location-name">
+                    📍 {{ location.name }}, {{ location.country }}
+                </div>
+                {% endif %}
+                <div class="temperature" data-testid="temperature" data-celsius="{{ weather.temperature }}">
+                    {{ weather.temperature }}°C
+                </div>
+                <div class="weather-icon" data-testid="weather-icon">
+                    {{ weather.icon }}
+                </div>
+                <div class="weather-data" data-testid="wind-speed">
+                    💨 Viento: {{ weather.wind_speed }} km/h
+                </div>
+            </div>
+
+            <div class="weather-card" data-testid="compare-weather-card">
+                {% if compare_location %}
+                <div class="location" data-testid="compare-location-name">
+                    📍 {{ compare_location.name }}, {{ compare_location.country }}
+                </div>
+                {% endif %}
+                <div class="temperature" data-testid="compare-temperature" data-celsius="{{ compare_weather.temperature }}">
+                    {{ compare_weather.temperature }}°C
+                </div>
+                <div class="weather-icon" data-testid="compare-weather-icon">
+                    {{ compare_weather.icon }}
+                </div>
+                <div class="weather-data" data-testid="compare-wind-speed">
+                    💨 Viento: {{ compare_weather.wind_speed }} km/h
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-top: 12px; display: flex; gap: 8px;">
+            <button class="toggle-btn" data-testid="toggle-unit" onclick="toggleUnit()">
+                Cambiar a °F
+            </button>
+            <a href="/?city={{ city }}">
+                <button class="compare-btn" type="button">✕ Quitar comparación</button>
+            </a>
+        </div>
+
+        {% elif compare and not compare_weather %}
+        <!-- Segunda ciudad no encontrada -->
+        <div class="weather-card" data-testid="weather-card">
+            {% if location %}
+            <div class="location" data-testid="location-name">
+                📍 {{ location.name }}, {{ location.country }}
+            </div>
+            {% endif %}
+            <div class="temperature" data-testid="temperature" data-celsius="{{ weather.temperature }}">
+                {{ weather.temperature }}°C
+            </div>
+            <div class="weather-icon" data-testid="weather-icon">
+                {{ weather.icon }}
+            </div>
+            <div class="weather-data" data-testid="wind-speed">
+                💨 Viento: {{ weather.wind_speed }} km/h
+            </div>
+        </div>
+        <p class="error" data-testid="compare-not-found-message">
+            Segunda ciudad no encontrada. Intentá con otro nombre.
+        </p>
+
+        {% else %}
+        <!-- Vista normal -->
         <div class="weather-card" data-testid="weather-card">
             {% if location %}
             <div class="location" data-testid="location-name">
@@ -135,7 +244,25 @@
             <button class="toggle-btn" data-testid="toggle-unit" onclick="toggleUnit()">
                 Cambiar a °F
             </button>
+            <button class="compare-btn" data-testid="compare-btn" onclick="showCompareForm()">
+                Comparar con otra ciudad
+            </button>
         </div>
+
+        <div id="compare-form" class="compare-form" style="display: none;">
+            <form class="search-form" method="GET" action="/" style="width: 100%;">
+                <input type="hidden" name="city" value="{{ city }}">
+                <input
+                    type="text"
+                    name="compare"
+                    placeholder="Segunda ciudad..."
+                    data-testid="compare-input"
+                >
+                <button type="submit" data-testid="compare-submit">Comparar</button>
+            </form>
+        </div>
+        {% endif %}
+
         {% elif weather.not_found %}
         <p class="error" data-testid="not-found-message">
             Ciudad no encontrada. Intentá con otro nombre.
@@ -147,7 +274,7 @@
         {% endif %}
     {% endif %}
 
-    {% if forecast and forecast.success %}
+    {% if forecast and forecast.success and not compare_weather %}
     <div class="forecast-container" data-testid="forecast-container">
         <h2>Próximos 7 días</h2>
         <div class="forecast-grid">
@@ -178,27 +305,21 @@
             return Math.round((celsius * 9/5) + 32);
         }
 
+        function showCompareForm() {
+            document.getElementById('compare-form').style.display = 'flex';
+        }
+
         function toggleUnit() {
             isFahrenheit = !isFahrenheit;
             const unit = isFahrenheit ? '°F' : '°C';
             const btnText = isFahrenheit ? 'Cambiar a °C' : 'Cambiar a °F';
 
-            // Toggle temperatura actual
-            const tempEl = document.querySelector('[data-testid="temperature"]');
-            if (tempEl) {
-                const celsius = parseFloat(tempEl.dataset.celsius);
-                const value = isFahrenheit ? toFahrenheit(celsius) : celsius;
-                tempEl.textContent = value + unit;
-            }
-
-            // Toggle forecast
-            document.querySelectorAll('[data-testid="forecast-temp-max"], [data-testid="forecast-temp-min"]').forEach(el => {
+            document.querySelectorAll('[data-celsius]').forEach(el => {
                 const celsius = parseFloat(el.dataset.celsius);
                 const value = isFahrenheit ? toFahrenheit(celsius) : celsius;
                 el.textContent = value + unit;
             });
 
-            // Actualizar botón
             document.querySelector('[data-testid="toggle-unit"]').textContent = btnText;
         }
     </script>

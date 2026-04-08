@@ -17,6 +17,13 @@ export class WeatherPage {
   readonly forecastTempMax: Locator;
   readonly forecastTempMin: Locator;
   readonly toggleButton: Locator;
+  readonly compareBtn: Locator;
+  readonly compareInput: Locator;
+  readonly compareSubmit: Locator;
+  readonly compareWeatherCard: Locator;
+  readonly compareTemperature: Locator;
+  readonly compareLocationName: Locator;
+  readonly comparisonGrid: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -34,6 +41,13 @@ export class WeatherPage {
     this.forecastTempMax = page.locator(WeatherLocators.forecastTempMax).first();
     this.forecastTempMin = page.locator(WeatherLocators.forecastTempMin).first();
     this.toggleButton = page.locator(WeatherLocators.toggleUnit);
+    this.compareBtn = page.locator(WeatherLocators.compareBtn);
+    this.compareInput = page.locator(WeatherLocators.compareInput);
+    this.compareSubmit = page.locator(WeatherLocators.compareSubmit);
+    this.compareWeatherCard = page.locator(WeatherLocators.compareWeatherCard);
+    this.compareTemperature = page.locator(WeatherLocators.compareTemperature);
+    this.compareLocationName = page.locator(WeatherLocators.compareLocationName);
+    this.comparisonGrid = page.locator(WeatherLocators.comparisonGrid);
   }
 
   async goto() {
@@ -43,5 +57,11 @@ export class WeatherPage {
   async searchCity(city: string) {
     await this.cityInput.fill(city);
     await this.searchButton.click();
+  }
+
+  async compareWithCity(city: string) {
+    await this.compareBtn.click();
+    await this.compareInput.fill(city);
+    await this.compareSubmit.click();
   }
 }
