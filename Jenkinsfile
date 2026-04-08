@@ -28,7 +28,7 @@ pipeline {
         stage('E2E Tests') {
             agent {
                 docker {
-                    image 'mcr.microsoft.com/playwright/python:v1.59.1-noble'
+                    image 'mcr.microsoft.com/playwright/python:latest'
                     args '-u root'
                 }
             }
