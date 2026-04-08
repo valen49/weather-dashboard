@@ -35,8 +35,7 @@ test.describe('Weather Dashboard', () => {
   test.describe('City Search', () => {
     test('should show weather for a valid city', async ({ page }) => {
       const weatherPage = new WeatherPage(page);
-      await weatherPage.goto();
-      await weatherPage.searchCity('Buenos Aires');
+      await page.goto('/?city=Buenos+Aires');
       const hasCard = await weatherPage.weatherCard.isVisible();
       const hasError = await weatherPage.notFoundMessage.isVisible();
       expect(hasCard || hasError).toBeTruthy();
