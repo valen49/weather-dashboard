@@ -20,7 +20,7 @@
   },
   "homepage": "https://github.com/valen49/weather-dashboard#readme",
   "devDependencies": {
-    "@playwright/test": "1.58.0",
+    "@playwright/test": "^1.58.0",
     "@types/node": "^25.5.2"
   }
 }
