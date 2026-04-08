@@ -32,6 +32,8 @@ pipeline {
             steps {
                 sh '''
                     pip install -r requirements.txt --break-system-packages
+                    curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+                    apt-get install -y nodejs
                     npm ci
                     npx playwright test --project=chromium
                 '''
