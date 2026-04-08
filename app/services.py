@@ -27,7 +27,7 @@ def get_coordinates(city: str):
     try:
         response = requests.get(
             GEOCODING_URL,
-            params={"name": city, "count": 1, "language": "es"},
+            params={"name": city, "count": 1, "language": "en"},
             timeout=10
         )
         response.raise_for_status()

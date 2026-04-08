@@ -5,7 +5,7 @@ pipeline {
         stage('Checkout') {
             agent any
             steps {
-                echo 'Clonando repositorio...'
+                echo 'Cloning repository...'
                 checkout scm
             }
         }
@@ -46,13 +46,13 @@ pipeline {
 
     post {
         success {
-            echo '✅ Pipeline completado exitosamente'
+            echo '✅ Pipeline completed successfully'
         }
         failure {
-            echo '❌ Pipeline falló'
+            echo '❌ Pipeline failed'
         }
         always {
-            echo 'Pipeline finalizado'
+            echo 'Pipeline finished'
         }
     }
 }

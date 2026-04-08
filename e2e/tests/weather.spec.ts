@@ -126,9 +126,9 @@ test.describe('Weather Dashboard', () => {
       await weatherPage.goto();
       const hasToggle = await weatherPage.toggleButton.isVisible();
       if (hasToggle) {
-        await expect(weatherPage.toggleButton).toHaveText('Cambiar a °F');
+        await expect(weatherPage.toggleButton).toHaveText('Switch to °F');
         await weatherPage.toggleButton.click();
-        await expect(weatherPage.toggleButton).toHaveText('Cambiar a °C');
+        await expect(weatherPage.toggleButton).toHaveText('Switch to °C');
       }
     });
 
@@ -191,7 +191,7 @@ test.describe('Weather Dashboard', () => {
       await page.goto('/?city=Mendoza&compare=Buenos+Aires');
       const hasGrid = await weatherPage.comparisonGrid.isVisible();
       if (hasGrid) {
-        await page.click('text=✕ Quitar comparación');
+        await page.click('text=✕ Remove comparison');
         await expect(weatherPage.comparisonGrid).not.toBeVisible();
       }
     });
