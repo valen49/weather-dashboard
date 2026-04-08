@@ -6,9 +6,12 @@ main = Blueprint('main', __name__)
 @main.route('/')
 def index():
     city = request.args.get('city', '').strip()
+    compare = request.args.get('compare', '').strip()
     location = None
     weather = None
     forecast = None
+    compare_location = None
+    compare_weather = None
 
     if city:
         location = get_coordinates(city)
@@ -21,4 +24,20 @@ def index():
         weather = get_weather()
         forecast = get_forecast()
 
-    return render_template('index.html', weather=weather, city=city, location=location, forecast=forecast)
+    if compare:
+        compare_location = get_coordinates(compare)
+        if compare_location:
+            compare_weather = get_weather(compare_location['latitude'], compare_location['longitude'])
+        else:
+            compare_weather = {"success": False, "not_found": True}
+
+    return render_template(
+        'index.html',
+        weather=weather,
+        city=city,
+        location=location,
+        forecast=forecast,
+        compare=compare,
+        compare_location=compare_location,
+        compare_weather=compare_weather
+    )

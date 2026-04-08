@@ -13,4 +13,11 @@ export const WeatherLocators = {
   forecastTempMax: '[data-testid="forecast-temp-max"]',
   forecastTempMin: '[data-testid="forecast-temp-min"]',
   toggleUnit: '[data-testid="toggle-unit"]',
+  compareBtn: '[data-testid="compare-btn"]',
+  compareInput: '[data-testid="compare-input"]',
+  compareSubmit: '[data-testid="compare-submit"]',
+  compareWeatherCard: '[data-testid="compare-weather-card"]',
+  compareTemperature: '[data-testid="compare-temperature"]',
+  compareLocationName: '[data-testid="compare-location-name"]',
+  comparisonGrid: '[data-testid="comparison-grid"]',
 };
