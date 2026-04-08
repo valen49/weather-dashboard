@@ -56,6 +56,17 @@
             margin: 12px 0;
             color: #4a5568;
         }
+        .toggle-btn {
+            padding: 8px 16px;
+            background-color: #718096;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-top: 12px;
+        }
+        .toggle-btn:hover { background-color: #4a5568; }
         .error { color: #e53e3e; }
         .forecast-container { margin-top: 24px; }
         .forecast-grid {
@@ -112,7 +123,7 @@
                 📍 {{ location.name }}, {{ location.country }}
             </div>
             {% endif %}
-            <div class="temperature" data-testid="temperature">
+            <div class="temperature" data-testid="temperature" data-celsius="{{ weather.temperature }}">
                 {{ weather.temperature }}°C
             </div>
             <div class="weather-icon" data-testid="weather-icon">
@@ -121,6 +132,9 @@
             <div class="weather-data" data-testid="wind-speed">
                 💨 Viento: {{ weather.wind_speed }} km/h
             </div>
+            <button class="toggle-btn" data-testid="toggle-unit" onclick="toggleUnit()">
+                Cambiar a °F
+            </button>
         </div>
         {% elif weather.not_found %}
         <p class="error" data-testid="not-found-message">
@@ -141,12 +155,52 @@
             <div class="forecast-card" data-testid="forecast-card">
                 <div class="forecast-date">{{ day.date }}</div>
                 <div class="forecast-icon">{{ day.icon }}</div>
-                <div class="forecast-temp-max" data-testid="forecast-temp-max">{{ day.temp_max }}°C</div>
-                <div class="forecast-temp-min" data-testid="forecast-temp-min">{{ day.temp_min }}°C</div>
+                <div class="forecast-temp-max"
+                     data-testid="forecast-temp-max"
+                     data-celsius="{{ day.temp_max }}">
+                    {{ day.temp_max }}°C
+                </div>
+                <div class="forecast-temp-min"
+                     data-testid="forecast-temp-min"
+                     data-celsius="{{ day.temp_min }}">
+                    {{ day.temp_min }}°C
+                </div>
             </div>
             {% endfor %}
         </div>
     </div>
     {% endif %}
+
+    <script>
+        let isFahrenheit = false;
+
+        function toFahrenheit(celsius) {
+            return Math.round((celsius * 9/5) + 32);
+        }
+
+        function toggleUnit() {
+            isFahrenheit = !isFahrenheit;
+            const unit = isFahrenheit ? '°F' : '°C';
+            const btnText = isFahrenheit ? 'Cambiar a °C' : 'Cambiar a °F';
+
+            // Toggle temperatura actual
+            const tempEl = document.querySelector('[data-testid="temperature"]');
+            if (tempEl) {
+                const celsius = parseFloat(tempEl.dataset.celsius);
+                const value = isFahrenheit ? toFahrenheit(celsius) : celsius;
+                tempEl.textContent = value + unit;
+            }
+
+            // Toggle forecast
+            document.querySelectorAll('[data-testid="forecast-temp-max"], [data-testid="forecast-temp-min"]').forEach(el => {
+                const celsius = parseFloat(el.dataset.celsius);
+                const value = isFahrenheit ? toFahrenheit(celsius) : celsius;
+                el.textContent = value + unit;
+            });
+
+            // Actualizar botón
+            document.querySelector('[data-testid="toggle-unit"]').textContent = btnText;
+        }
+    </script>
 </body>
 </html>

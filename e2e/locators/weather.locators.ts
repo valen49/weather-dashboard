@@ -12,4 +12,5 @@ export const WeatherLocators = {
   forecastCard: '[data-testid="forecast-card"]',
   forecastTempMax: '[data-testid="forecast-temp-max"]',
   forecastTempMin: '[data-testid="forecast-temp-min"]',
+  toggleUnit: '[data-testid="toggle-unit"]',
 };
