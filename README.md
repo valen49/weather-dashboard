@@ -1,4 +1,4 @@
-markdown# 🌤️ Weather Dashboard
+🌤️ Weather Dashboard
 
 A Flask web application that displays real-time weather data using the Open-Meteo API. Built as part of a DevOps learning course.
 
