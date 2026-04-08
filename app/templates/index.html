@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -142,21 +142,21 @@
         <input
             type="text"
             name="city"
-            placeholder="Buscá una ciudad..."
+            placeholder="Search for a city..."
             value="{{ city }}"
             data-testid="city-input"
         >
         {% if compare %}
         <input type="hidden" name="compare" value="{{ compare }}">
         {% endif %}
-        <button type="submit" data-testid="search-button">Buscar</button>
+        <button type="submit" data-testid="search-button">Search</button>
     </form>
 
     {% if weather %}
         {% if weather.success %}
 
         {% if compare_weather and compare_weather.success %}
-        <!-- Vista comparación -->
+        <!-- Comparison view -->
         <div class="comparison-grid" data-testid="comparison-grid">
             <div class="weather-card" data-testid="weather-card">
                 {% if location %}
@@ -171,7 +171,7 @@
                     {{ weather.icon }}
                 </div>
                 <div class="weather-data" data-testid="wind-speed">
-                    💨 Viento: {{ weather.wind_speed }} km/h
+                    💨 Wind: {{ weather.wind_speed }} km/h
                 </div>
             </div>
 
@@ -188,22 +188,22 @@
                     {{ compare_weather.icon }}
                 </div>
                 <div class="weather-data" data-testid="compare-wind-speed">
-                    💨 Viento: {{ compare_weather.wind_speed }} km/h
+                    💨 Wind: {{ compare_weather.wind_speed }} km/h
                 </div>
             </div>
         </div>
 
         <div style="margin-top: 12px; display: flex; gap: 8px;">
             <button class="toggle-btn" data-testid="toggle-unit" onclick="toggleUnit()">
-                Cambiar a °F
+                Switch to °F
             </button>
             <a href="/?city={{ city }}">
-                <button class="compare-btn" type="button">✕ Quitar comparación</button>
+                <button class="compare-btn" type="button">✕ Remove comparison</button>
             </a>
         </div>
 
         {% elif compare and not compare_weather %}
-        <!-- Segunda ciudad no encontrada -->
+        <!-- Second city not found -->
         <div class="weather-card" data-testid="weather-card">
             {% if location %}
             <div class="location" data-testid="location-name">
@@ -217,15 +217,15 @@
                 {{ weather.icon }}
             </div>
             <div class="weather-data" data-testid="wind-speed">
-                💨 Viento: {{ weather.wind_speed }} km/h
+                💨 Wind: {{ weather.wind_speed }} km/h
             </div>
         </div>
         <p class="error" data-testid="compare-not-found-message">
-            Segunda ciudad no encontrada. Intentá con otro nombre.
+            City not found. Please try a different name.
         </p>
 
         {% else %}
-        <!-- Vista normal -->
+        <!-- Normal view -->
         <div class="weather-card" data-testid="weather-card">
             {% if location %}
             <div class="location" data-testid="location-name">
@@ -239,13 +239,13 @@
                 {{ weather.icon }}
             </div>
             <div class="weather-data" data-testid="wind-speed">
-                💨 Viento: {{ weather.wind_speed }} km/h
+                💨 Wind: {{ weather.wind_speed }} km/h
             </div>
             <button class="toggle-btn" data-testid="toggle-unit" onclick="toggleUnit()">
-                Cambiar a °F
+                Switch to °F
             </button>
             <button class="compare-btn" data-testid="compare-btn" onclick="showCompareForm()">
-                Comparar con otra ciudad
+                Compare with another city
             </button>
         </div>
 
@@ -255,28 +255,28 @@
                 <input
                     type="text"
                     name="compare"
-                    placeholder="Segunda ciudad..."
+                    placeholder="Second city..."
                     data-testid="compare-input"
                 >
-                <button type="submit" data-testid="compare-submit">Comparar</button>
+                <button type="submit" data-testid="compare-submit">Compare</button>
             </form>
         </div>
         {% endif %}
 
         {% elif weather.not_found %}
         <p class="error" data-testid="not-found-message">
-            Ciudad no encontrada. Intentá con otro nombre.
+            City not found. Please try a different name.
         </p>
         {% else %}
         <p class="error" data-testid="error-message">
-            No se pudo obtener el clima. Intentá más tarde.
+            Could not retrieve weather data. Please try again later.
         </p>
         {% endif %}
     {% endif %}
 
     {% if forecast and forecast.success and not compare_weather %}
     <div class="forecast-container" data-testid="forecast-container">
-        <h2>Próximos 7 días</h2>
+        <h2>7-Day Forecast</h2>
         <div class="forecast-grid">
             {% for day in forecast.days %}
             <div class="forecast-card" data-testid="forecast-card">
@@ -312,7 +312,7 @@
         function toggleUnit() {
             isFahrenheit = !isFahrenheit;
             const unit = isFahrenheit ? '°F' : '°C';
-            const btnText = isFahrenheit ? 'Cambiar a °C' : 'Cambiar a °F';
+            const btnText = isFahrenheit ? 'Switch to °C' : 'Switch to °F';
 
             document.querySelectorAll('[data-celsius]').forEach(el => {
                 const celsius = parseFloat(el.dataset.celsius);
