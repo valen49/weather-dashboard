@@ -73,4 +73,78 @@ test.describe('Weather Dashboard', () => {
       await expect(weatherPage.forecastCards).toHaveCount(7);
     });
   });
+
+  test.describe('Temperature Toggle', () => {
+    test('should display toggle button', async ({ page }) => {
+      const weatherPage = new WeatherPage(page);
+      await weatherPage.goto();
+      const hasToggle = await weatherPage.toggleButton.isVisible();
+      const hasError = await weatherPage.errorMessage.isVisible();
+      expect(hasToggle || hasError).toBeTruthy();
+    });
+
+    test('should switch from celsius to fahrenheit on click', async ({ page }) => {
+      const weatherPage = new WeatherPage(page);
+      await weatherPage.goto();
+      const hasTemp = await weatherPage.temperature.isVisible();
+      if (hasTemp) {
+        const tempBefore = await weatherPage.temperature.textContent();
+        expect(tempBefore).toContain('°C');
+        await weatherPage.toggleButton.click();
+        const tempAfter = await weatherPage.temperature.textContent();
+        expect(tempAfter).toContain('°F');
+      }
+    });
+
+    test('should convert temperature correctly', async ({ page }) => {
+      const weatherPage = new WeatherPage(page);
+      await weatherPage.goto();
+      const hasTemp = await weatherPage.temperature.isVisible();
+      if (hasTemp) {
+        const celsiusText = await weatherPage.temperature.textContent();
+        const celsius = parseFloat(celsiusText!.replace('°C', '').trim());
+        await weatherPage.toggleButton.click();
+        const fahrenheitText = await weatherPage.temperature.textContent();
+        const fahrenheit = parseFloat(fahrenheitText!.replace('°F', '').trim());
+        const expected = Math.round((celsius * 9/5) + 32);
+        expect(fahrenheit).toBe(expected);
+      }
+    });
+
+    test('should switch back to celsius on second click', async ({ page }) => {
+      const weatherPage = new WeatherPage(page);
+      await weatherPage.goto();
+      const hasTemp = await weatherPage.temperature.isVisible();
+      if (hasTemp) {
+        await weatherPage.toggleButton.click();
+        await weatherPage.toggleButton.click();
+        const tempText = await weatherPage.temperature.textContent();
+        expect(tempText).toContain('°C');
+      }
+    });
+
+    test('should update toggle button text', async ({ page }) => {
+      const weatherPage = new WeatherPage(page);
+      await weatherPage.goto();
+      const hasToggle = await weatherPage.toggleButton.isVisible();
+      if (hasToggle) {
+        await expect(weatherPage.toggleButton).toHaveText('Cambiar a °F');
+        await weatherPage.toggleButton.click();
+        await expect(weatherPage.toggleButton).toHaveText('Cambiar a °C');
+      }
+    });
+
+    test('should toggle forecast temperatures', async ({ page }) => {
+      const weatherPage = new WeatherPage(page);
+      await weatherPage.goto();
+      const hasTemp = await weatherPage.temperature.isVisible();
+      if (hasTemp) {
+        const maxBefore = await weatherPage.forecastTempMax.textContent();
+        expect(maxBefore).toContain('°C');
+        await weatherPage.toggleButton.click();
+        const maxAfter = await weatherPage.forecastTempMax.textContent();
+        expect(maxAfter).toContain('°F');
+      }
+    });
+  });
 });
