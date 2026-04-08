@@ -31,9 +31,7 @@ pipeline {
             }
             steps {
                 sh '''
-                    python -m venv venv
-                    . venv/bin/activate
-                    pip install -r requirements.txt
+                    pip install -r requirements.txt --break-system-packages
                     npm ci
                     npx playwright test --project=chromium
                 '''
