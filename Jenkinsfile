@@ -42,6 +42,18 @@ pipeline {
                 '''
             }
         }
+
+        stage('Deploy to Kubernetes') {
+            agent any
+            steps {
+                sh '''
+                    docker build -t weather-dashboard:latest .
+                    kubectl apply -f k8s-deployment.yaml
+                    kubectl apply -f k8s-service.yaml
+                    kubectl rollout status deployment/weather-dashboard
+                '''
+            }
+        }
     }
 
     post {
