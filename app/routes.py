@@ -21,6 +21,7 @@ def index():
         else:
             weather = {"success": False, "not_found": True}
     else:
+        location = {"name": "Mendoza", "country": "Argentina"}
         weather = get_weather()
         forecast = get_forecast()
 
