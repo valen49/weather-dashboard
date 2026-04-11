@@ -15,6 +15,7 @@ spec:
       containers:
       - name: weather-dashboard
         image: weather-dashboard:latest
-        imagePullPolicy: Never
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 5000
+ 
