@@ -2,9 +2,10 @@ pipeline {
     agent none
 
     environment {
-        APP_NAME  = 'weather-dashboard'
-        NAMESPACE = 'default'
-        MINIPC_IP = '192.168.68.117'
+        APP_NAME     = 'weather-dashboard'
+        NAMESPACE    = 'default'
+        MINIPC_IP    = '192.168.68.117'
+        MINIKUBE_HOME = '/home/valen'
     }
 
     options {
