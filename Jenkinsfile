@@ -74,9 +74,7 @@ pipeline {
             agent any
             steps {
                 sh '''
-                    eval $(/usr/local/bin/minikube docker-env)
                     docker build -t ${APP_NAME}:latest .
-                    eval $(/usr/local/bin/minikube docker-env --unset)
                     echo "Imagen lista: ${APP_NAME}:latest"
                 '''
             }
