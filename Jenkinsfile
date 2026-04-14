@@ -78,8 +78,8 @@ pipeline {
                             --cache-from ${APP_NAME}:latest \
                             -t ${APP_NAME}:${BUILD_NUMBER} \
                             -t ${APP_NAME}:latest \
-                            -l version=${BUILD_NUMBER} \
-                            -l timestamp=$(date -u +'%Y-%m-%dT%H:%M:%SZ') .
+                            --label version=${BUILD_NUMBER} \
+                            --label timestamp=$(date -u +'%Y-%m-%dT%H:%M:%SZ') .
                         '''
                     }
                 }
