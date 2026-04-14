@@ -2,13 +2,11 @@ pipeline {
     agent none
 
     environment {
-        APP_NAME      = 'weather-dashboard'
-        NAMESPACE     = "${params.NAMESPACE}"
-        ENVIRONMENT   = "${params.ENVIRONMENT}"
-        MINIPC_IP     = '192.168.68.117'
-        MINIKUBE_HOME = '/home/valen'
+        APP_NAME        = 'weather-dashboard'
+        NAMESPACE       = "${params.NAMESPACE}"
+        ENVIRONMENT     = "${params.ENVIRONMENT}"
+        MINIPC_IP       = '192.168.68.117'
         DOCKER_BUILDKIT = '1'
-        COMPOSE_DOCKER_CLI_BUILD = '1'
     }
 
     options {
@@ -19,27 +17,35 @@ pipeline {
     }
 
     parameters {
-        choice(name: 'ENVIRONMENT', choices: ['dev', 'staging', 'prod'], description: 'Target environment')
+        choice(name: 'ENVIRONMENT', choices: ['dev', 'staging', 'prod'], description: 'Ambiente de destino')
         string(name: 'NAMESPACE', defaultValue: 'default', description: 'Kubernetes namespace')
-        booleanParam(name: 'SKIP_TESTS', defaultValue: false, description: 'Skip tests (hotfix only)')
-        booleanParam(name: 'DEPLOY_ENABLED', defaultValue: true, description: 'Enable deployment to Kubernetes')
+        booleanParam(name: 'SKIP_TESTS', defaultValue: false, description: 'Omitir pruebas (solo hotfix)')
+        booleanParam(name: 'DEPLOY_ENABLED', defaultValue: true, description: 'Habilitar despliegue en K8s')
     }
 
     stages {
         stage('Checkout') {
             agent any
             steps {
-                checkout scm
-                echo "Commit: ${env.GIT_COMMIT.take(8)} | Build: #${env.BUILD_NUMBER}"
+                script {
+                    // Capturamos las variables del SCM para evitar que GIT_COMMIT sea null
+                    def scmVars = checkout scm
+                    env.GIT_COMMIT = scmVars.GIT_COMMIT
+                    
+                    // Uso de operador seguro ?. para evitar el NullPointerException
+                    def shortCommit = env.GIT_COMMIT?.take(8) ?: "unknown"
+                    echo "Commit: ${shortCommit} | Build: #${env.BUILD_NUMBER}"
+                }
             }
         }
 
         stage('Unit Tests') {
-            when {
-                expression { !params.SKIP_TESTS }
-            }
+            when { expression { !params.SKIP_TESTS } }
             agent {
-                docker { image 'python:3.11-slim' }
+                docker { 
+                    image 'python:3.11-slim'
+                    args '-u root' // Asegura permisos para instalar dependencias
+                }
             }
             steps {
                 sh '''
@@ -54,9 +60,6 @@ pipeline {
                 always {
                     junit 'test-results.xml'
                 }
-                failure {
-                    error 'Unit tests failed — deployment canceled'
-                }
             }
         }
 
@@ -65,105 +68,63 @@ pipeline {
                 stage('Build E2E Image') {
                     agent any
                     steps {
-                        sh '''
-                            docker build -f Dockerfile.e2e \
-                            --cache-from playwright-e2e:latest \
-                            -t playwright-e2e:${BUILD_NUMBER} \
-                            -t playwright-e2e:latest .
-                        '''
+                        sh "docker build -f Dockerfile.e2e -t playwright-e2e:${env.BUILD_NUMBER} -t playwright-e2e:latest ."
                     }
                 }
 
                 stage('Build App Image') {
                     agent any
                     steps {
-                        sh '''
+                        sh """
                             docker build \
-                            --cache-from ${APP_NAME}:latest \
-                            -t ${APP_NAME}:${BUILD_NUMBER} \
+                            -t ${APP_NAME}:${env.BUILD_NUMBER} \
                             -t ${APP_NAME}:latest \
-                            --label version=${BUILD_NUMBER} \
-                            --label timestamp=$(date -u +'%Y-%m-%dT%H:%M:%SZ') .
-                        '''
+                            --label version=${env.BUILD_NUMBER} \
+                            --label commit=${env.GIT_COMMIT?.take(8)} .
+                        """
                     }
                 }
             }
         }
 
         stage('E2E Tests') {
-            when {
-                expression { !params.SKIP_TESTS }
-            }
-            agent {
-                docker {
-                    image "playwright-e2e:${BUILD_NUMBER}"
-                }
-            }
+            when { expression { !params.SKIP_TESTS } }
+            agent { docker { image "playwright-e2e:${env.BUILD_NUMBER}" } }
             steps {
                 retry(2) {
-                    sh 'npm ci && npx playwright test --project=chromium --retries=1'
+                    sh 'npm ci && npx playwright test --project=chromium'
                 }
-            }
-            post {
-                failure {
-                    error 'E2E tests failed — deployment canceled'
-                }
-            }
-        }
-
-        stage('Validate Manifests') {
-            agent any
-            steps {
-                sh '''
-                    kubectl apply --dry-run=client -f k8s-deployment.yaml
-                    kubectl apply --dry-run=client -f k8s-service.yaml
-                    echo "✓ Manifests validated"
-                '''
             }
         }
 
         stage('Deploy') {
             agent any
-            when {
-                expression { params.DEPLOY_ENABLED }
-            }
+            when { expression { params.DEPLOY_ENABLED } }
             steps {
-                retry(2) {
-                    sh '''
-                        kubectl apply -f k8s-deployment.yaml
-                        kubectl apply -f k8s-service.yaml
-
-                        kubectl set image deployment/${APP_NAME} \
-                            ${APP_NAME}=${APP_NAME}:${BUILD_NUMBER} \
-                            -n ${NAMESPACE} \
-                            --record
-
-                        kubectl rollout status deployment/${APP_NAME} \
-                            -n ${NAMESPACE} \
-                            --timeout=300s
-                    '''
+                script {
+                    sh "kubectl apply -f k8s-deployment.yaml"
+                    sh "kubectl apply -f k8s-service.yaml"
+                    
+                    // Actualización de imagen con validación de rollout
+                    sh """
+                        kubectl set image deployment/${APP_NAME} ${APP_NAME}=${APP_NAME}:${env.BUILD_NUMBER} -n ${NAMESPACE}
+                        kubectl rollout status deployment/${APP_NAME} -n ${NAMESPACE} --timeout=120s
+                    """
                 }
             }
         }
 
         stage('Healthcheck') {
             agent any
-            when {
-                expression { params.DEPLOY_ENABLED }
-            }
+            when { expression { params.DEPLOY_ENABLED } }
             steps {
-                retry(15) {
+                retry(5) {
                     sh '''
-                        POD=$(kubectl get pod -n ${NAMESPACE} -l app=${APP_NAME} -o jsonpath='{.items[0].metadata.name}')
+                        POD=$(kubectl get pod -n ${NAMESPACE} -l app=${APP_NAME} --field-selector=status.phase=Running -o jsonpath='{.items[0].metadata.name}')
                         [ -n "$POD" ] || exit 1
-                        echo "Checking pod: ${POD}"
-
-                        kubectl exec -n ${NAMESPACE} ${POD} -- \
-                            python3 -c "import urllib.request; urllib.request.urlopen('http://localhost:5000').read(); print('OK')" || exit 1
-                        
-                        echo "✓ App responding correctly"
+                        kubectl exec -n ${NAMESPACE} ${POD} -- python3 -c "import urllib.request; urllib.request.urlopen('http://localhost:5000').read()"
                     '''
-                    sleep(time: 2, unit: 'SECONDS')
+                    sleep 5
                 }
             }
         }
@@ -171,40 +132,23 @@ pipeline {
 
     post {
         success {
-            echo "✓ Deploy OK — Build #${env.BUILD_NUMBER}"
-            echo "  URL: http://${env.MINIPC_IP}:5000"
-            echo "  Commit: ${env.GIT_COMMIT.take(8)}"
-        }
-        failure {
-            echo "✗ Pipeline failed at: ${env.STAGE_NAME}"
-            node('built-in') {
-                sh '''
-                    echo "=== Deployment Status ==="
-                    kubectl get deployment/${APP_NAME} -n ${NAMESPACE} -o wide || true
-                    
-                    echo "=== Pods Status ==="
-                    kubectl get pods -n ${NAMESPACE} -l app=${APP_NAME} -o wide || true
-                    
-                    echo "=== Latest Logs ==="
-                    kubectl logs -n ${NAMESPACE} -l app=${APP_NAME} --tail=30 --timestamps=true || true
-                    
-                    echo "=== Pod Description ==="
-                    kubectl describe pod -n ${NAMESPACE} -l app=${APP_NAME} || true
-                    
-                    echo "=== Rollout History ==="
-                    kubectl rollout history deployment/${APP_NAME} -n ${NAMESPACE} || true
-                '''
+            script {
+                def shortCommit = env.GIT_COMMIT?.take(8) ?: "N/A"
+                echo "✓ Deploy OK — Build #${env.BUILD_NUMBER}"
+                echo "  URL: http://${env.MINIPC_IP}:5000"
+                echo "  Commit: ${shortCommit}"
             }
         }
-        unstable {
-            echo "⚠ Pipeline unstable — check logs"
+        failure {
+            echo "✗ Pipeline falló en la etapa: ${env.STAGE_NAME ?: 'Desconocida'}"
+            node('built-in') {
+                // Debug rápido si falla
+                sh "kubectl get pods -n ${NAMESPACE} -l app=${APP_NAME} || true"
+            }
         }
         always {
             node('built-in') {
-                sh '''
-                    echo "Cleaning up workspace..."
-                    docker image prune -f || true
-                '''
+                sh 'docker image prune -f || true'
                 cleanWs()
             }
         }
