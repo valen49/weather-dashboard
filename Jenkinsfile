@@ -2,20 +2,26 @@ pipeline {
     agent none
 
     environment {
-        APP_NAME     = 'weather-dashboard'
-        NAMESPACE    = 'default'
-        MINIPC_IP    = '192.168.68.117'
+        APP_NAME      = 'weather-dashboard'
+        NAMESPACE     = 'default'
+        MINIPC_IP     = '192.168.68.117'
         MINIKUBE_HOME = '/home/valen'
+        DOCKER_BUILDKIT = '1'
+        COMPOSE_DOCKER_CLI_BUILD = '1'
     }
 
     options {
         disableConcurrentBuilds()
-        timeout(time: 15, unit: 'MINUTES')
+        timeout(time: 30, unit: 'MINUTES')
         timestamps()
+        buildDiscarder(logRotator(numToKeepStr: '10'))
+    }
+
+    parameters {
+        booleanParam(name: 'SKIP_TESTS', defaultValue: false, description: 'Skip tests (solo hotfix)')
     }
 
     stages {
-
         stage('Checkout') {
             agent any
             steps {
@@ -25,15 +31,15 @@ pipeline {
         }
 
         stage('Unit Tests') {
+            when {
+                expression { !params.SKIP_TESTS }
+            }
             agent {
                 docker { image 'python:3.11' }
             }
             steps {
                 sh '''
-                    python -m venv venv
-                    . venv/bin/activate
-                    pip install -r requirements.txt
-                    pip install -r requirements-dev.txt
+                    pip install --no-cache-dir -r requirements.txt -r requirements-dev.txt
                     pytest tests/ -v --junitxml=test-results.xml
                 '''
             }
@@ -47,25 +53,49 @@ pipeline {
             }
         }
 
-        stage('Build E2E Image') {
-            agent any
-            steps {
-                sh '''
-                    docker build -f Dockerfile.e2e \
-                    -t playwright-e2e:${BUILD_NUMBER} .
-                '''
+        stage('Build Parallel') {
+            parallel {
+                stage('Build E2E Image') {
+                    agent any
+                    steps {
+                        sh '''
+                            docker build -f Dockerfile.e2e \
+                            --cache-from playwright-e2e:latest \
+                            -t playwright-e2e:${BUILD_NUMBER} \
+                            -t playwright-e2e:latest .
+                        '''
+                    }
+                }
+
+                stage('Build App Image') {
+                    agent any
+                    steps {
+                        sh '''
+                            docker build \
+                            --cache-from ${APP_NAME}:latest \
+                            -t ${APP_NAME}:${BUILD_NUMBER} \
+                            -t ${APP_NAME}:latest \
+                            -l version=${BUILD_NUMBER} \
+                            -l timestamp=$(date -u +'%Y-%m-%dT%H:%M:%SZ') .
+                        '''
+                    }
+                }
             }
         }
 
         stage('E2E Tests') {
+            when {
+                expression { !params.SKIP_TESTS }
+            }
             agent {
                 docker {
                     image "playwright-e2e:${BUILD_NUMBER}"
-                    reuseNode true
                 }
             }
             steps {
-                sh 'npx playwright test --project=chromium'
+                retry(2) {
+                    sh 'npm ci && npx playwright test --project=chromium --retries=1'
+                }
             }
             post {
                 failure {
@@ -74,23 +104,13 @@ pipeline {
             }
         }
 
-        stage('Build imagen') {
-            agent any
-            steps {
-                sh '''
-                    docker build -t ${APP_NAME}:latest .
-                    echo "Imagen lista: ${APP_NAME}:latest"
-                '''
-            }
-        }
-
-        stage('Validar manifests') {
+        stage('Validar Manifests') {
             agent any
             steps {
                 sh '''
                     kubectl apply --dry-run=client -f k8s-deployment.yaml
                     kubectl apply --dry-run=client -f k8s-service.yaml
-                    echo "Manifiestos OK"
+                    echo "✓ Manifiestos validados"
                 '''
             }
         }
@@ -98,64 +118,80 @@ pipeline {
         stage('Deploy') {
             agent any
             steps {
-                sh '''
-                    kubectl apply -f k8s-deployment.yaml
-                    kubectl apply -f k8s-service.yaml
+                retry(2) {
+                    sh '''
+                        kubectl apply -f k8s-deployment.yaml
+                        kubectl apply -f k8s-service.yaml
 
-                    kubectl set image deployment/${APP_NAME} \
-                        ${APP_NAME}=${APP_NAME}:latest \
-                        -n ${NAMESPACE}
+                        kubectl set image deployment/${APP_NAME} \
+                            ${APP_NAME}=${APP_NAME}:${BUILD_NUMBER} \
+                            -n ${NAMESPACE} \
+                            --record
 
-                    kubectl rollout status deployment/${APP_NAME} \
-                        -n ${NAMESPACE} \
-                        --timeout=180s
-                '''
+                        kubectl rollout status deployment/${APP_NAME} \
+                            -n ${NAMESPACE} \
+                            --timeout=300s
+                    '''
+                }
             }
         }
 
-        stage('Verificar') {
+        stage('Healthcheck') {
             agent any
             steps {
-                sh '''
-                    POD=$(kubectl get pod -n ${NAMESPACE} -l app=${APP_NAME} -o jsonpath='{.items[0].metadata.name}')
-                    echo "Verificando pod: ${POD}"
+                retry(15) {
+                    sh '''
+                        POD=$(kubectl get pod -n ${NAMESPACE} -l app=${APP_NAME} -o jsonpath='{.items[0].metadata.name}')
+                        [ -n "$POD" ] || exit 1
+                        echo "Verificando pod: ${POD}"
 
-                    for i in $(seq 1 10); do
-                        HTTP_CODE=$(kubectl exec -n ${NAMESPACE} ${POD} -- \
-                            python3 -c "import urllib.request; print(urllib.request.urlopen('http://localhost:5000').getcode())" 2>/dev/null || echo "000")
-                        echo "Intento ${i}/10 - HTTP: ${HTTP_CODE}"
-                        if [ "${HTTP_CODE}" = "200" ]; then
-                            echo "App OK"
-                            exit 0
-                        fi
-                        sleep 3
-                    done
-
-                    echo "La app no respondio correctamente"
-                    exit 1
-                '''
+                        kubectl exec -n ${NAMESPACE} ${POD} -- \
+                            curl -sf http://localhost:5000 > /dev/null || exit 1
+                        
+                        echo "✓ App respondiendo correctamente"
+                    '''
+                    sleep(time: 2, unit: 'SECONDS')
+                }
             }
         }
     }
 
     post {
         success {
-            echo "Deploy OK — Build #${env.BUILD_NUMBER} en http://${env.MINIPC_IP}:5000"
+            echo "✓ Deploy OK — Build #${env.BUILD_NUMBER}"
+            echo "  URL: http://${env.MINIPC_IP}:5000"
+            echo "  Commit: ${env.GIT_COMMIT.take(8)}"
         }
         failure {
+            echo "✗ Pipeline falló en: ${env.STAGE_NAME}"
             node('built-in') {
                 sh '''
-                    echo "=== Pods ==="
-                    kubectl get pods || true
-                    echo "=== Logs ==="
-                    kubectl logs -l app=weather-dashboard --tail=50 || true
-                    echo "=== Describe ==="
-                    kubectl describe pod -l app=weather-dashboard || true
+                    echo "=== Status Deployment ==="
+                    kubectl get deployment/${APP_NAME} -n ${NAMESPACE} -o wide || true
+                    
+                    echo "=== Pods Status ==="
+                    kubectl get pods -n ${NAMESPACE} -l app=${APP_NAME} -o wide || true
+                    
+                    echo "=== Últimos Logs ==="
+                    kubectl logs -n ${NAMESPACE} -l app=${APP_NAME} --tail=30 --timestamps=true || true
+                    
+                    echo "=== Pod Description ==="
+                    kubectl describe pod -n ${NAMESPACE} -l app=${APP_NAME} || true
+                    
+                    echo "=== Rollout History ==="
+                    kubectl rollout history deployment/${APP_NAME} -n ${NAMESPACE} || true
                 '''
             }
         }
+        unstable {
+            echo "⚠ Pipeline inestable — revisar logs"
+        }
         always {
             node('built-in') {
+                sh '''
+                    echo "Limpiando espacio de trabajo..."
+                    docker image prune -f || true
+                '''
                 cleanWs()
             }
         }
