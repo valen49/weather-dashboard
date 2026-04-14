@@ -3,7 +3,8 @@ pipeline {
 
     environment {
         APP_NAME      = 'weather-dashboard'
-        NAMESPACE     = 'default'
+        NAMESPACE     = "${params.NAMESPACE}"
+        ENVIRONMENT   = "${params.ENVIRONMENT}"
         MINIPC_IP     = '192.168.68.117'
         MINIKUBE_HOME = '/home/valen'
         DOCKER_BUILDKIT = '1'
@@ -18,7 +19,10 @@ pipeline {
     }
 
     parameters {
+        choice(name: 'ENVIRONMENT', choices: ['dev', 'staging', 'prod'], description: 'Target environment')
+        string(name: 'NAMESPACE', defaultValue: 'default', description: 'Kubernetes namespace')
         booleanParam(name: 'SKIP_TESTS', defaultValue: false, description: 'Skip tests (hotfix only)')
+        booleanParam(name: 'DEPLOY_ENABLED', defaultValue: true, description: 'Enable deployment to Kubernetes')
     }
 
     stages {
@@ -120,6 +124,9 @@ pipeline {
 
         stage('Deploy') {
             agent any
+            when {
+                expression { params.DEPLOY_ENABLED }
+            }
             steps {
                 retry(2) {
                     sh '''
@@ -141,6 +148,9 @@ pipeline {
 
         stage('Healthcheck') {
             agent any
+            when {
+                expression { params.DEPLOY_ENABLED }
+            }
             steps {
                 retry(15) {
                     sh '''
