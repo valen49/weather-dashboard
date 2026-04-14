@@ -10,7 +10,8 @@ A modern, containerized Flask web application that displays real-time weather da
 - 🔄 **Unit Toggle**: Switch between Celsius and Fahrenheit
 - ⚖️ **City Comparison**: Compare weather between two locations
 - 🌦️ **Weather Icons**: Dynamic icons based on WMO weather codes
-- 📱 **Responsive Design**: Mobile-friendly interface
+- 📱 **Fully Responsive Design**: Optimized for mobile, tablet, and desktop
+- 🖱️ **Touch-Friendly**: Large touch targets and mobile-optimized interactions
 - 🐳 **Containerized**: Docker-ready for easy deployment
 - ☸️ **Kubernetes Ready**: Production deployment manifests included
 
