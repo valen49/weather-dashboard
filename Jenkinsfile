@@ -47,6 +47,16 @@ pipeline {
             }
         }
 
+        stage('Build E2E Image') {
+            agent any
+            steps {
+                sh '''
+                    docker build -f Dockerfile.e2e \
+                    -t playwright-e2e:${BUILD_NUMBER} .
+                '''
+            }
+        }
+
         stage('E2E Tests') {
             agent {
                 docker {
