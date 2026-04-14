@@ -11,7 +11,9 @@ COPY requirements-dev.txt .
 RUN pip install --no-cache-dir -r requirements.txt \
  && pip install --no-cache-dir -r requirements-dev.txt
 
-RUN apt-get update && apt-get install -y nodejs npm
+# Node oficial (NO apt)
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+ && apt-get install -y nodejs
 
 # Node deps
 COPY package.json package-lock.json .
@@ -20,5 +22,6 @@ RUN npm ci
 # Código
 COPY . .
 
-# Run tests
+RUN npx playwright install --with-deps
+
 CMD ["npx", "playwright", "test", "--project=chromium"]
