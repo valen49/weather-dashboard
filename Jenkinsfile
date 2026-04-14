@@ -60,18 +60,12 @@ pipeline {
         stage('E2E Tests') {
             agent {
                 docker {
-                    image 'mcr.microsoft.com/playwright/python:v1.58.0-noble'
-                    args '-u root'
+                    image "playwright-e2e:${BUILD_NUMBER}"
+                    reuseNode true
                 }
             }
             steps {
-                sh '''
-                    pip install -r requirements.txt --break-system-packages
-                    curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
-                    apt-get install -y nodejs
-                    npm ci
-                    npx playwright test --project=chromium
-                '''
+                sh 'npx playwright test --project=chromium'
             }
             post {
                 failure {
