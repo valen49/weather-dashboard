@@ -179,6 +179,17 @@ The project includes a comprehensive Jenkins pipeline (`Jenkinsfile`) with:
 3. Set environment variables in Jenkins
 4. Trigger builds on Git push or manually
 
+### Manual Pipeline Execution
+When running manually, configure these parameters:
+
+- **ENVIRONMENT**: Target environment (dev/staging/prod)
+  - Auto-generates namespace: `weather-dev`, `weather-staging`, `weather-prod`
+- **CUSTOM_NAMESPACE**: Override auto-generated namespace (optional)
+- **SKIP_TESTS**: Skip test execution (for hotfixes)
+- **DEPLOY_ENABLED**: Enable/disable Kubernetes deployment
+
+The pipeline will show deployment configuration before proceeding.
+
 ## 📁 Project Structure
 
 ```
