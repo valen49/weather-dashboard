@@ -39,7 +39,7 @@ pipeline {
             }
             steps {
                 sh '''
-                    pip install --no-cache-dir -r requirements.txt -r requirements-dev.txt
+                    pip install --no-cache-dir --break-system-packages -r requirements.txt -r requirements-dev.txt
                     pytest tests/ -v --junitxml=test-results.xml
                 '''
             }
