@@ -149,7 +149,7 @@ pipeline {
                         echo "Checking pod: ${POD}"
 
                         kubectl exec -n ${NAMESPACE} ${POD} -- \
-                            curl -sf http://localhost:5000 > /dev/null || exit 1
+                            python3 -c "import urllib.request; urllib.request.urlopen('http://localhost:5000').read(); print('OK')" || exit 1
                         
                         echo "✓ App responding correctly"
                     '''
