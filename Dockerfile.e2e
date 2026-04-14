@@ -1,0 +1,25 @@
+FROM mcr.microsoft.com/playwright/python:v1.58.0-noble
+
+# Evita prompts interactivos
+ENV DEBIAN_FRONTEND=noninteractive
+
+WORKDIR /app
+
+# --- Python deps ---
+COPY requirements.txt .
+COPY requirements-dev.txt .
+
+RUN pip install --no-cache-dir -r requirements.txt \
+ && pip install --no-cache-dir -r requirements-dev.txt
+
+# --- Node deps (Playwright tests) ---
+COPY package.json package-lock.json ./
+
+RUN npm ci
+
+# --- Código del proyecto ---
+COPY . .
+
+# Comando por defecto (puede ser sobreescrito por Jenkins)
+CMD ["npx", "playwright", "test", "--project=chromium"]
+
