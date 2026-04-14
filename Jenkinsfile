@@ -35,11 +35,14 @@ pipeline {
                 expression { !params.SKIP_TESTS }
             }
             agent {
-                docker { image 'python:3.11' }
+                docker { image 'python:3.11-slim' }
             }
             steps {
                 sh '''
-                    pip install --no-cache-dir --break-system-packages -r requirements.txt -r requirements-dev.txt
+                    python -m venv /tmp/venv
+                    . /tmp/venv/bin/activate
+                    pip install --upgrade pip
+                    pip install --no-cache-dir -r requirements.txt -r requirements-dev.txt
                     pytest tests/ -v --junitxml=test-results.xml
                 '''
             }
