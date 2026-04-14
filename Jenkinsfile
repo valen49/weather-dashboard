@@ -18,7 +18,7 @@ pipeline {
     }
 
     parameters {
-        booleanParam(name: 'SKIP_TESTS', defaultValue: false, description: 'Skip tests (solo hotfix)')
+        booleanParam(name: 'SKIP_TESTS', defaultValue: false, description: 'Skip tests (hotfix only)')
     }
 
     stages {
@@ -51,7 +51,7 @@ pipeline {
                     junit 'test-results.xml'
                 }
                 failure {
-                    error 'Unit tests fallaron — deploy cancelado'
+                    error 'Unit tests failed — deployment canceled'
                 }
             }
         }
@@ -102,18 +102,18 @@ pipeline {
             }
             post {
                 failure {
-                    error 'E2E tests fallaron — deploy cancelado'
+                    error 'E2E tests failed — deployment canceled'
                 }
             }
         }
 
-        stage('Validar Manifests') {
+        stage('Validate Manifests') {
             agent any
             steps {
                 sh '''
                     kubectl apply --dry-run=client -f k8s-deployment.yaml
                     kubectl apply --dry-run=client -f k8s-service.yaml
-                    echo "✓ Manifiestos validados"
+                    echo "✓ Manifests validated"
                 '''
             }
         }
@@ -146,12 +146,12 @@ pipeline {
                     sh '''
                         POD=$(kubectl get pod -n ${NAMESPACE} -l app=${APP_NAME} -o jsonpath='{.items[0].metadata.name}')
                         [ -n "$POD" ] || exit 1
-                        echo "Verificando pod: ${POD}"
+                        echo "Checking pod: ${POD}"
 
                         kubectl exec -n ${NAMESPACE} ${POD} -- \
-                            curl -sf http://localhost:5000 > /dev/null || exit 1
+                            python3 -c "import urllib.request; urllib.request.urlopen('http://localhost:5000').read(); print('OK')" || exit 1
                         
-                        echo "✓ App respondiendo correctamente"
+                        echo "✓ App responding correctly"
                     '''
                     sleep(time: 2, unit: 'SECONDS')
                 }
@@ -166,16 +166,16 @@ pipeline {
             echo "  Commit: ${env.GIT_COMMIT.take(8)}"
         }
         failure {
-            echo "✗ Pipeline falló en: ${env.STAGE_NAME}"
+            echo "✗ Pipeline failed at: ${env.STAGE_NAME}"
             node('built-in') {
                 sh '''
-                    echo "=== Status Deployment ==="
+                    echo "=== Deployment Status ==="
                     kubectl get deployment/${APP_NAME} -n ${NAMESPACE} -o wide || true
                     
                     echo "=== Pods Status ==="
                     kubectl get pods -n ${NAMESPACE} -l app=${APP_NAME} -o wide || true
                     
-                    echo "=== Últimos Logs ==="
+                    echo "=== Latest Logs ==="
                     kubectl logs -n ${NAMESPACE} -l app=${APP_NAME} --tail=30 --timestamps=true || true
                     
                     echo "=== Pod Description ==="
@@ -187,12 +187,12 @@ pipeline {
             }
         }
         unstable {
-            echo "⚠ Pipeline inestable — revisar logs"
+            echo "⚠ Pipeline unstable — check logs"
         }
         always {
             node('built-in') {
                 sh '''
-                    echo "Limpiando espacio de trabajo..."
+                    echo "Cleaning up workspace..."
                     docker image prune -f || true
                 '''
                 cleanWs()
