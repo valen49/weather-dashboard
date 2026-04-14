@@ -42,3 +42,7 @@ def index():
         compare_location=compare_location,
         compare_weather=compare_weather
     )
+
+@main.route('/health')
+def health():
+    return {'status': 'healthy', 'timestamp': '2024-01-01T00:00:00Z'}, 200
