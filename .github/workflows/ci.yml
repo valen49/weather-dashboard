@@ -50,11 +50,6 @@ jobs:
           npm ci
           npx playwright install chromium --with-deps
 
-      - name: Start App in background
-        run: |
-          python run.py &
-          sleep 5 # Tiempo para que la app levante
-
       - name: Run E2E tests
         run: npx playwright test --project=chromium
 
