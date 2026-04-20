@@ -102,8 +102,8 @@ pipeline {
             when { expression { params.DEPLOY_ENABLED } }
             steps {
                 script {
-                    sh "kubectl apply -f k8s-deployment.yaml"
-                    sh "kubectl apply -f k8s-service.yaml"
+                    sh "kubectl apply -f k8s-deployment.yaml -n ${NAMESPACE}"
+                    sh "kubectl apply -f k8s-service.yaml -n ${NAMESPACE}"
                     
                     // Actualización de imagen con validación de rollout
                     sh """
