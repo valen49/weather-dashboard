@@ -2,67 +2,36 @@ pipeline {
     agent none
 
     environment {
-        APP_NAME      = 'weather-dashboard'
-        ENVIRONMENT   = "${params.ENVIRONMENT}"
-        NAMESPACE     = "${params.CUSTOM_NAMESPACE ?: 'weather-' + params.ENVIRONMENT}"
-        MINIPC_IP     = '192.168.68.117'
+        APP_NAME     = 'weather-dashboard'
+        NAMESPACE    = 'default'
+        MINIPC_IP    = '192.168.68.117'
         DOCKER_BUILDKIT = '1'
     }
 
     options {
         disableConcurrentBuilds()
-        timeout(time: ENVIRONMENT == 'prod' ? 45 : 30, unit: 'MINUTES')
+        timeout(time: 30, unit: 'MINUTES')
         timestamps()
-        buildDiscarder(logRotator(numToKeepStr: ENVIRONMENT == 'prod' ? '20' : '10'))
-    }
-
-    parameters {
-        choice(name: 'ENVIRONMENT', choices: ['dev', 'staging', 'prod'], description: 'Target environment (auto-sets namespace)')
-        string(name: 'CUSTOM_NAMESPACE', defaultValue: '', description: 'Custom K8s namespace (leave empty to use auto-generated)')
-        booleanParam(name: 'SKIP_TESTS', defaultValue: false, description: 'Skip tests (hotfix only)')
-        booleanParam(name: 'DEPLOY_ENABLED', defaultValue: true, description: 'Enable deployment to Kubernetes')
+        buildDiscarder(logRotator(numToKeepStr: '10'))
     }
 
     stages {
-        stage('Validate Parameters') {
-            steps {
-                echo "🚀 Deployment Configuration:"
-                echo "   Environment: ${ENVIRONMENT}"
-                echo "   Namespace: ${NAMESPACE}"
-                echo "   Skip Tests: ${params.SKIP_TESTS}"
-                echo "   Deploy Enabled: ${params.DEPLOY_ENABLED}"
-                echo "   Build: #${env.BUILD_NUMBER}"
-                echo "   Commit: ${env.GIT_COMMIT?.take(8) ?: 'pending checkout'}"
-
-                script {
-                    if (ENVIRONMENT == 'prod' && !params.DEPLOY_ENABLED) {
-                        echo "⚠️  WARNING: Production deployment disabled!"
-                    }
-                }
-            }
-        }
-
         stage('Checkout') {
             agent any
             steps {
                 script {
-                    // Capturamos las variables del SCM para evitar que GIT_COMMIT sea null
                     def scmVars = checkout scm
                     env.GIT_COMMIT = scmVars.GIT_COMMIT
-                    
-                    // Uso de operador seguro ?. para evitar el NullPointerException
-                    def shortCommit = env.GIT_COMMIT?.take(8) ?: "unknown"
-                    echo "Commit: ${shortCommit} | Build: #${env.BUILD_NUMBER}"
+                    echo "Commit: ${env.GIT_COMMIT?.take(8)} | Build: #${env.BUILD_NUMBER}"
                 }
             }
         }
 
         stage('Unit Tests') {
-            when { expression { !params.SKIP_TESTS } }
             agent {
-                docker { 
+                docker {
                     image 'python:3.11-slim'
-                    args '-u root' // Asegura permisos para instalar dependencias
+                    args '-u root'
                 }
             }
             steps {
@@ -106,7 +75,6 @@ pipeline {
         }
 
         stage('E2E Tests') {
-            when { expression { !params.SKIP_TESTS } }
             agent { docker { image "playwright-e2e:${env.BUILD_NUMBER}" } }
             steps {
                 retry(2) {
@@ -117,25 +85,18 @@ pipeline {
 
         stage('Deploy') {
             agent any
-            when { expression { params.DEPLOY_ENABLED } }
             steps {
-                script {
-                    sh "kubectl create namespace ${NAMESPACE} --dry-run=client -o yaml | kubectl apply -f -"
-                    sh "kubectl apply -f k8s-deployment.yaml -n ${NAMESPACE}"
-                    sh "kubectl apply -f k8s-service.yaml -n ${NAMESPACE}"
-                    
-                    // Actualización de imagen con validación de rollout
-                    sh """
-                        kubectl set image deployment/${APP_NAME} ${APP_NAME}=${APP_NAME}:${env.BUILD_NUMBER} -n ${NAMESPACE}
-                        kubectl rollout status deployment/${APP_NAME} -n ${NAMESPACE} --timeout=120s
-                    """
-                }
+                sh "kubectl apply -f k8s-deployment.yaml -n ${NAMESPACE}"
+                sh "kubectl apply -f k8s-service.yaml -n ${NAMESPACE}"
+                sh """
+                    kubectl set image deployment/${APP_NAME} ${APP_NAME}=${APP_NAME}:${env.BUILD_NUMBER} -n ${NAMESPACE}
+                    kubectl rollout status deployment/${APP_NAME} -n ${NAMESPACE} --timeout=120s
+                """
             }
         }
 
         stage('Healthcheck') {
             agent any
-            when { expression { params.DEPLOY_ENABLED } }
             steps {
                 retry(5) {
                     sh '''
@@ -151,17 +112,11 @@ pipeline {
 
     post {
         success {
-            script {
-                def shortCommit = env.GIT_COMMIT?.take(8) ?: "N/A"
-                echo "✓ Deploy OK — Build #${env.BUILD_NUMBER}"
-                echo "  URL: http://${env.MINIPC_IP}:5000"
-                echo "  Commit: ${shortCommit}"
-            }
+            echo "✓ Deploy OK — Build #${env.BUILD_NUMBER} | http://${MINIPC_IP}:30000"
         }
         failure {
-            echo "✗ Pipeline falló en la etapa: ${env.STAGE_NAME ?: 'Desconocida'}"
+            echo "✗ Pipeline failed at: ${env.STAGE_NAME ?: 'unknown'}"
             node('built-in') {
-                // Debug rápido si falla
                 sh "kubectl get pods -n ${NAMESPACE} -l app=${APP_NAME} || true"
             }
         }
