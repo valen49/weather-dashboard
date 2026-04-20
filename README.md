@@ -10,7 +10,8 @@ A modern, containerized Flask web application that displays real-time weather da
 - 🔄 **Unit Toggle**: Switch between Celsius and Fahrenheit
 - ⚖️ **City Comparison**: Compare weather between two locations
 - 🌦️ **Weather Icons**: Dynamic icons based on WMO weather codes
-- 📱 **Responsive Design**: Mobile-friendly interface
+- 📱 **Fully Responsive Design**: Optimized for mobile, tablet, and desktop
+- 🖱️ **Touch-Friendly**: Large touch targets and mobile-optimized interactions
 - 🐳 **Containerized**: Docker-ready for easy deployment
 - ☸️ **Kubernetes Ready**: Production deployment manifests included
 
@@ -177,6 +178,17 @@ The project includes a comprehensive Jenkins pipeline (`Jenkinsfile`) with:
 2. Configure credentials for Docker registry and K8s cluster
 3. Set environment variables in Jenkins
 4. Trigger builds on Git push or manually
+
+### Manual Pipeline Execution
+When running manually, configure these parameters:
+
+- **ENVIRONMENT**: Target environment (dev/staging/prod)
+  - Auto-generates namespace: `weather-dev`, `weather-staging`, `weather-prod`
+- **CUSTOM_NAMESPACE**: Override auto-generated namespace (optional)
+- **SKIP_TESTS**: Skip test execution (for hotfixes)
+- **DEPLOY_ENABLED**: Enable/disable Kubernetes deployment
+
+The pipeline will show deployment configuration before proceeding.
 
 ## 📁 Project Structure
 
