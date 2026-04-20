@@ -1,5 +1,8 @@
+from datetime import datetime, timezone
+
 from flask import Blueprint, render_template, request
-from app.services import get_weather, get_coordinates, get_forecast
+
+from app.services import get_coordinates, get_forecast, get_weather
 
 main = Blueprint('main', __name__)
 
@@ -45,4 +48,4 @@ def index():
 
 @main.route('/health')
 def health():
-    return {'status': 'healthy', 'timestamp': '2024-01-01T00:00:00Z'}, 200
+    return {'status': 'healthy', 'timestamp': datetime.now(timezone.utc).isoformat()}, 200
