@@ -32,7 +32,7 @@ pipeline {
                 echo "   Skip Tests: ${params.SKIP_TESTS}"
                 echo "   Deploy Enabled: ${params.DEPLOY_ENABLED}"
                 echo "   Build: #${env.BUILD_NUMBER}"
-                echo "   Commit: ${env.GIT_COMMIT.take(8)}"
+                echo "   Commit: ${env.GIT_COMMIT?.take(8) ?: 'pending checkout'}"
 
                 script {
                     if (ENVIRONMENT == 'prod' && !params.DEPLOY_ENABLED) {
