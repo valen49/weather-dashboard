@@ -120,6 +120,7 @@ pipeline {
             when { expression { params.DEPLOY_ENABLED } }
             steps {
                 script {
+                    sh "kubectl create namespace ${NAMESPACE} --dry-run=client -o yaml | kubectl apply -f -"
                     sh "kubectl apply -f k8s-deployment.yaml -n ${NAMESPACE}"
                     sh "kubectl apply -f k8s-service.yaml -n ${NAMESPACE}"
                     
