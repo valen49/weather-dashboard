@@ -14,6 +14,7 @@ A modern, containerized Flask web application that displays real-time weather da
 - 🖱️ **Touch-Friendly**: Large touch targets and mobile-optimized interactions
 - 🐳 **Containerized**: Docker-ready for easy deployment
 - ☸️ **Kubernetes Ready**: Production deployment manifests included
+- 🔔 **Webhook Support**: Trigger external notifications on pipeline events
 
 ## 🏗️ Architecture
 
@@ -30,6 +31,13 @@ A modern, containerized Flask web application that displays real-time weather da
                        │   (None - API   │
                        │    only)        │
                        └─────────────────┘
+                              │
+                              ▼
+                       ┌─────────────────┐
+                       │   Webhooks      │
+                       │   (Pipeline /   │
+                       │    Event notif) │
+                       └─────────────────┘
 ```
 
 ## 🛠️ Tech Stack
@@ -44,6 +52,7 @@ A modern, containerized Flask web application that displays real-time weather da
 | **Container** | Docker | Application packaging |
 | **Orchestration** | Kubernetes | Production deployment |
 | **Version Control** | Git + GitHub | Code management |
+| **Webhooks** | HTTP callbacks | Pipeline & event notifications |
 
 ## 🚀 Quick Start
 
@@ -161,6 +170,7 @@ The project includes a comprehensive Jenkins pipeline (`Jenkinsfile`) with:
 - **Container Security**: Images built with best practices
 - **Kubernetes Deploy**: Automatic deployment to K8s cluster
 - **Health Checks**: Post-deployment verification
+- **Webhook Triggers**: Incoming webhooks from GitHub to trigger builds; outgoing webhooks notify external systems on pipeline events
 
 ### Pipeline Stages
 1. **Checkout**: Git clone and workspace setup
@@ -251,6 +261,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 - **Logs**: Application logs available via `kubectl logs`
 - **Metrics**: Basic request counting (expandable)
 - **Alerts**: Pipeline failure notifications
+- **Webhooks**: Event-driven notifications to external systems (Slack, Teams, custom endpoints)
 
 ## 🔒 Security
 
@@ -261,6 +272,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## 📈 Roadmap
 
+- [x] Webhook support for pipeline & event notifications
 - [ ] Add weather alerts/notifications
 - [ ] Implement user preferences
 - [ ] Add historical weather data
