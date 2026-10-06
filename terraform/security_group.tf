@@ -3,7 +3,7 @@ resource "aws_security_group" "pin_sg" {
   description = "Security group para el PIN - weather-dashboard"
 
   ingress {
-    description = "SSH - solo desde mi IP"
+    description = "SSH - abierto para el deploy desde GitHub Actions"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
