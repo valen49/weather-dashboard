@@ -26,3 +26,10 @@ Thumbs.db
 /playwright/.cache/
 /playwright/.auth/
 .claude/
+
+# Terraform
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.*
+terraform/*.pem
+*.pem
