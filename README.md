@@ -259,7 +259,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 - **Health Checks**: Built-in `/health` endpoint
 - **Logs**: Application logs available via `kubectl logs`
-- **Metrics**: Basic request counting (expandable)
+- **Metrics**: `/metrics` endpoint in Prometheus format (via `prometheus-flask-exporter`), exposing request count and request latency per endpoint
 - **Alerts**: Pipeline failure notifications
 - **Webhooks**: Event-driven notifications to external systems (Slack, Teams, custom endpoints)
 

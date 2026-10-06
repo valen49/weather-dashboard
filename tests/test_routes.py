@@ -70,3 +70,9 @@ def test_index_with_invalid_compare(client):
         mock_forecast.return_value = {"days": [], "success": True}
         response = client.get('/?city=Mendoza&compare=ciudadinexistente123')
     assert response.status_code == 200
+
+def test_metrics_endpoint(client):
+    response = client.get('/metrics')
+    assert response.status_code == 200
+    body = response.get_data(as_text=True)
+    assert 'flask_http_request_total' in body
